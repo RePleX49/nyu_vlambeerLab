@@ -11,16 +11,41 @@ using UnityEngine;
 
 public class Pathmaker : MonoBehaviour {
 
-// STEP 2: ============================================================================================
-// translate the pseudocode below
+    // STEP 2: ============================================================================================
+    // translate the pseudocode below
 
-//	DECLARE CLASS MEMBER VARIABLES:
-//	Declare a private integer called counter that starts at 0; 		// counter will track how many floor tiles I've instantiated
-//	Declare a public Transform called floorPrefab, assign the prefab in inspector;
-//	Declare a public Transform called pathmakerSpherePrefab, assign the prefab in inspector; 		// you'll have to make a "pathmakerSphere" prefab later
+    //	DECLARE CLASS MEMBER VARIABLES:
+    //	Declare a private integer called counter that starts at 0; 		// counter will track how many floor tiles I've instantiated
+    //	Declare a public Transform called floorPrefab, assign the prefab in inspector;
+    //	Declare a public Transform called pathmakerSpherePrefab, assign the prefab in inspector; 		// you'll have to make a "pathmakerSphere" prefab later
 
+    private int counter = 0;
+    private int maxCount;
+    static int WorldTileCount = 0;
 
-	void Update () {
+    [SerializeField] int maxTileCount = 500;
+    [SerializeField] Transform floorPrefab;
+    [SerializeField] Transform pathmakerSpherePrefab;
+
+    [HideInInspector] public bool bIsLongHallSpawner;
+
+    private void Start()
+    {
+        // Randomize amount of things a pathmaker will spawn
+        maxCount = Random.Range(20, 40);
+
+        // Randomize if pathmaker will prioritize long halls or not
+        if(Random.Range(0.0f, 1.0f) > 0.6f)
+        {
+            bIsLongHallSpawner = true;
+        }
+        else
+        {
+            bIsLongHallSpawner = false;
+        }
+    }
+
+    void Update () {
 //		If counter is less than 50, then:
 //			Generate a random number from 0.0f to 1.0f;
 //			If random number is less than 0.25f, then rotate myself 90 degrees;
@@ -33,6 +58,80 @@ public class Pathmaker : MonoBehaviour {
 //			Increment counter;
 //		Else:
 //			Destroy my game object; 		// self destruct if I've made enough tiles already
+
+        
+
+        if(counter < maxCount && WorldTileCount < maxTileCount)
+        {
+            Vector3 RotateVector = new Vector3(0, 0, 0);
+            float randNumber = Random.Range(0.0f, 1.0f);
+            if(randNumber < 0.25f)
+            {
+                RotateVector = new Vector3(0, 90, 0);
+                if (bIsLongHallSpawner)
+                {
+                    if(Random.Range(0.0f, 1.0f) > 0.99f)
+                    {
+                        // rotate facing 90 degrees
+                        transform.Rotate(RotateVector);
+                    }
+                }
+                else
+                {
+                    // rotate facing 90 degrees                   
+                    transform.Rotate(RotateVector);
+                }
+                
+            }
+            else if(randNumber >= 0.25f && randNumber <= 0.5f)
+            {
+                // rotate facing -90 degrees
+                RotateVector = new Vector3(0, -90, 0);
+                if (bIsLongHallSpawner)
+                {
+                    if (Random.Range(0.0f, 1.0f) > 0.99f)
+                    {
+                        // rotate facing 90 degrees
+                        transform.Rotate(RotateVector);
+                    }
+                }
+                else
+                {
+                    // rotate facing 90 degrees                   
+                    transform.Rotate(RotateVector);
+                }
+            }
+            else if(randNumber >= 0.965f)
+            {
+                Instantiate(pathmakerSpherePrefab, transform.position, transform.rotation);
+            }
+
+            Collider[] colliders = Physics.OverlapSphere(transform.position, 0.5f);
+
+            if(colliders.Length <= 1)
+            {
+                Transform boi = Instantiate(floorPrefab, transform.position, new Quaternion(0, 0, 0, 0));
+
+                // boi.gameObject.GetComponent<MeshRenderer>().material.color = Random.ColorHSV();
+
+                counter++;
+                WorldTileCount++;
+            }        
+
+            transform.position += transform.forward * 5.0f;
+            
+            Debug.Log(WorldTileCount);
+        }
+        else
+        {
+            if(bIsLongHallSpawner)
+            {
+                Transform boi = Instantiate(pathmakerSpherePrefab, transform.position, transform.rotation);
+                boi.GetComponent<Pathmaker>().bIsLongHallSpawner = false;
+            }
+
+            Destroy(this.gameObject);
+        }
 	}
 
 } 
