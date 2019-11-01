@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // MAZE PROC GEN LAB
 // all students: complete steps 1-6, as listed in this file
@@ -21,10 +22,9 @@ public class Pathmaker : MonoBehaviour {
 
     private int counter = 0;
     private int maxCount;
-    static int WorldTileCount = 0;
 
     [SerializeField] int maxTileCount = 500;
-    [SerializeField] Transform floorPrefab;
+    [SerializeField] GameObject[] floorPrefab;
     [SerializeField] Transform pathmakerSpherePrefab;
 
     [HideInInspector] public bool bIsLongHallSpawner;
@@ -46,22 +46,21 @@ public class Pathmaker : MonoBehaviour {
     }
 
     void Update () {
-//		If counter is less than 50, then:
-//			Generate a random number from 0.0f to 1.0f;
-//			If random number is less than 0.25f, then rotate myself 90 degrees;
-//				... Else if number is 0.25f-0.5f, then rotate myself -90 degrees;
-//				... Else if number is 0.99f-1.0f, then instantiate a pathmakerSpherePrefab clone at my current position;
-//			// end elseIf
 
-//			Instantiate a floorPrefab clone at current position;
-//			Move forward ("forward", as in, the direction I'm currently facing) by 5 units;
-//			Increment counter;
-//		Else:
-//			Destroy my game object; 		// self destruct if I've made enough tiles already
+        //		If counter is less than 50, then:
+        //			Generate a random number from 0.0f to 1.0f;
+        //			If random number is less than 0.25f, then rotate myself 90 degrees;
+        //				... Else if number is 0.25f-0.5f, then rotate myself -90 degrees;
+        //				... Else if number is 0.99f-1.0f, then instantiate a pathmakerSpherePrefab clone at my current position;
+        //			// end elseIf
 
-        
+        //			Instantiate a floorPrefab clone at current position;
+        //			Move forward ("forward", as in, the direction I'm currently facing) by 5 units;
+        //			Increment counter;
+        //		Else:
+        //			Destroy my game object; 		// self destruct if I've made enough tiles already
 
-        if(counter < maxCount && WorldTileCount < maxTileCount)
+        if (counter < maxCount && GameController.WorldTileCount < maxTileCount)
         {
             Vector3 RotateVector = new Vector3(0, 0, 0);
             float randNumber = Random.Range(0.0f, 1.0f);
@@ -101,26 +100,36 @@ public class Pathmaker : MonoBehaviour {
                     transform.Rotate(RotateVector);
                 }
             }
-            else if(randNumber >= 0.965f)
+            else if(randNumber >= 0.98f)
             {
                 Instantiate(pathmakerSpherePrefab, transform.position, transform.rotation);
+                GameController.pathMakerCount++;
             }
 
             Collider[] colliders = Physics.OverlapSphere(transform.position, 0.5f);
 
             if(colliders.Length <= 1)
             {
-                Transform boi = Instantiate(floorPrefab, transform.position, new Quaternion(0, 0, 0, 0));
-
-                // boi.gameObject.GetComponent<MeshRenderer>().material.color = Random.ColorHSV();
+                int RandNum;
+                if (Random.Range(0.0f, 1.0f) > 0.8f)
+                {
+                    RandNum = Random.Range(0, 3);
+                }
+                else
+                {
+                    RandNum = 3;
+                }
+                
+                GameObject boi = Instantiate(floorPrefab[RandNum]);
+                boi.transform.position = transform.position;
 
                 counter++;
-                WorldTileCount++;
+                GameController.WorldTileCount++;
             }        
 
-            transform.position += transform.forward * 5.0f;
+            transform.position += transform.forward * 8f;
             
-            Debug.Log(WorldTileCount);
+            Debug.Log(GameController.WorldTileCount);
         }
         else
         {
@@ -130,7 +139,15 @@ public class Pathmaker : MonoBehaviour {
                 boi.GetComponent<Pathmaker>().bIsLongHallSpawner = false;
             }
 
-            Destroy(this.gameObject);
+            //spawn another pathmaker if this is the last one and the maxTileCount hasn't been reached
+            if(GameController.WorldTileCount < maxTileCount && GameController.pathMakerCount < 2)
+            {
+                Instantiate(pathmakerSpherePrefab, transform.position, transform.rotation);
+                GameController.pathMakerCount++;
+            }
+
+            GameController.pathMakerCount--;
+            Destroy(this.gameObject);      
         }
 	}
 
